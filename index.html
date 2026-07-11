@@ -1421,6 +1421,7 @@
   $('segTabs').addEventListener('click',e=>{
     const b=e.target.closest('.seg-btn');if(!b)return;
     if(b.dataset.v==='anim'){location.href='animations.html';return;}
+    if(b.dataset.v==='code'){location.href='code.html';return;}
     vxView=b.dataset.v;store.set('vx_view',vxView);applyView();
     toast(vxView==='code'?'</> Code mode \u2014 enhanced coding brain ON':(vxView==='anim'?'\u2728 Animation mode \u2014 describe your idea!':'\u2302 Home mode'));
   });
@@ -1437,6 +1438,7 @@
     const items=[];
     items.push({label:'💎 Plans & Upgrade',fn:()=>{location.href='plans.html';}});
     items.push({label:'✨ Animations',fn:()=>{location.href='animations.html';}});
+    items.push({label:'</> Code Studio',fn:()=>{location.href='code.html';}});
     items.push({label:'📁 Projects',fn:()=>{
       if(isGuest){toast('🔒 Sign up / log in to use Projects');}
       else $('addProjectBtn').click();
