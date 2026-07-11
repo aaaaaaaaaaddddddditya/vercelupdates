@@ -218,7 +218,7 @@
   <div class="sec-title">💎 Plans</div>
   <div id="plansEditor"></div>
 
-  <div class="sec-title">👥 Registered users (this browser)</div>
+  <div class="sec-title">👥 Users & Subscriptions (this browser)</div>
   <div class="card" id="usersCard"></div>
 
   <div class="savebar">
@@ -315,20 +315,41 @@
     });
   }
 
+  const SUB_OPTS=[['free','Free'],['community','Community'],['manager','Manager (90%)'],['coowner','Co-Owner (\u221e)'],['owner','Owner (\u221e)']];
   function renderUsers(){
     const box=$('usersCard');
     let users={};
     try{users=JSON.parse(store.get('vx_users')||'{}');}catch(e){}
     const list=Object.values(users);
     if(!list.length){box.innerHTML='<div class="empty">No registered users yet (users register on the chat page, stored per browser).</div>';return;}
-    let rows=list.map(u=>{
+    box.innerHTML='<table><thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Usage today</th><th>Subscription</th></tr></thead><tbody></tbody></table>'+
+      '<div class="empty" style="margin-top:10px">\ud83d\udd12 Hidden tiers \u2014 Owner (\u221e), Co-Owner (\u221e), Manager (90%) \u2014 sirf yahin se milte hain, Plans page pe nahi dikhte. Community bhi yahin se grant karo (Discord ticket ke baad). Dropdown badalte hi save ho jata hai.</div>';
+    const tb=box.querySelector('tbody');
+    list.forEach(u=>{
       const tr=document.createElement('tr');
+      let usage={m:0,i:0};
+      try{const g=JSON.parse(store.get('vx_usage_'+u.email)||'null');if(g&&g.d===new Date().toDateString())usage=g;}catch(e){}
       const t1=document.createElement('td');t1.textContent=u.username;
       const t2=document.createElement('td');t2.textContent=u.name;
       const t3=document.createElement('td');t3.textContent=u.email;
-      tr.append(t1,t2,t3);return tr.outerHTML;
-    }).join('');
-    box.innerHTML='<table><thead><tr><th>Username</th><th>Name</th><th>Email</th></tr></thead><tbody>'+rows+'</tbody></table>';
+      const t4=document.createElement('td');t4.textContent=(usage.m||0)+' msgs \u00b7 '+(usage.i||0)+' imgs';
+      const t5=document.createElement('td');
+      const sel=document.createElement('select');
+      sel.style.cssText='background:rgba(255,255,255,.05);border:1px solid rgba(168,85,247,.3);color:#ececf1;border-radius:8px;padding:5px 8px;font-family:inherit;font-size:.76rem;cursor:pointer;';
+      SUB_OPTS.forEach(p=>{const o=document.createElement('option');o.value=p[0];o.textContent=p[1];o.style.background='#14101f';sel.appendChild(o);});
+      sel.value=(u.sub&&SUB_OPTS.some(p=>p[0]===u.sub))?u.sub:'free';
+      sel.onchange=()=>{
+        const all=JSON.parse(store.get('vx_users')||'{}');
+        if(all[u.email]){
+          all[u.email].sub=sel.value;
+          store.set('vx_users',JSON.stringify(all));
+          toast('\u2705 '+u.username+' \u2192 '+sel.options[sel.selectedIndex].text);
+        }
+      };
+      t5.appendChild(sel);
+      tr.append(t1,t2,t3,t4,t5);
+      tb.appendChild(tr);
+    });
   }
 
   $('saveAll').onclick=()=>{

@@ -6,13 +6,13 @@ window.VX_DEFAULT_CFG = {
     {
       id: "free", name: "Free", price: "₹0", period: "forever",
       tag: "Get started with Velox AI",
-      features: ["Unlimited basic chats", "Free AI model", "Chat history & projects", "Community support"],
+      features: ["30 messages / day", "5 AI images / day", "Chat history & projects", "Community support"],
       soon: true, highlight: false
     },
     {
       id: "smart", name: "Smart", price: "₹99", period: "/month",
       tag: "For everyday power users",
-      features: ["Everything in Free", "Faster responses", "Smarter AI model", "Priority queue"],
+      features: ["150 messages / day", "30 AI images / day", "Faster responses", "Priority queue"],
       soon: true, highlight: false
     },
     {
