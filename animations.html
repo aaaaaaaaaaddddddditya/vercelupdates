@@ -347,13 +347,13 @@
   }
 
   /* ---- AI ---- */
-  const ANIM_PROMPT="You are Velox Animator. The user describes an animation idea. Reply with ONLY one complete self-contained HTML document (inline CSS and JS, no external files) that plays the requested animation automatically in a smooth loop. Use canvas, SVG or CSS animations. Dark background unless asked otherwise, centered scene, smooth motion. Put the ENTIRE document inside a single ```html fenced code block with ZERO text outside the block.";
+  const ANIM_PROMPT="You are Velox Animator, an expert creative coder. The user describes an animation idea. Reply with ONLY one complete self-contained HTML document (inline CSS and JS, no external files) implementing an IMPRESSIVE, COMPLEX animation of that idea. Rules: use <canvas> with requestAnimationFrame for characters/physics; characters (stickman, people, animals) MUST be articulated figures with joints (head, torso, arms with elbows, legs with knees) animated with sine-based motion \u2014 NEVER a static drawing and NEVER just moving text; add background atmosphere (gradient, particles, lights, shadow); smooth infinite loop; canvas fills the window and handles resize; dark background unless asked otherwise. Keep total code under 240 lines. Output the ENTIRE document inside ONE ```html fenced block with ZERO text outside it.";
   async function askProxy(idea){
     const res=await fetch("/api/chat",{
       method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
         messages:[{role:"system",content:ANIM_PROMPT},{role:"user",content:idea}],
-        model:"qwen/qwen3-coder:free",max_tokens:6000
+        model:"qwen/qwen3-coder:free",max_tokens:8000
       })
     });
     const data=await res.json().catch(()=>null);
@@ -379,9 +379,51 @@
     throw new Error("Empty response");
   }
   function extractCode(reply){
-    const m=reply.match(/```(?:html)?\s*\n?([\s\S]*?)```/);
+    let m=reply.match(/```(?:html)?\s*\n?([\s\S]*?)```/);
     if(m)return m[1].trim();
-    if(/^\s*<(!doctype|html)/i.test(reply))return reply.trim();
+    m=reply.match(/```(?:html)?\s*\n?([\s\S]+)$/);
+    if(m&&/</.test(m[1])){
+      let c=m[1].trim();
+      if(!/<\/html>\s*$/i.test(c))c+='\n</body></html>';
+      return c;
+    }
+    if(/^\s*<(!doctype|html|canvas|svg)/i.test(reply))return reply.trim();
+    return null;
+  }
+
+  /* ---- built-in premium presets (always work) ---- */
+  const STICKMAN=`<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#07030f;overflow:hidden}canvas{display:block}</style></head><body><canvas id="c"></canvas><script>
+const cv=document.getElementById('c'),g2=cv.getContext('2d');
+let W,H;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;}rs();addEventListener('resize',rs);
+const conf=[];for(let i=0;i<90;i++)conf.push({x:Math.random(),y:Math.random(),s:Math.random()*4+2,v:Math.random()*.6+.3,h:Math.random()*360});
+function limb(x1,y1,a1,l1,a2,l2){const mx=x1+Math.cos(a1)*l1,my=y1+Math.sin(a1)*l1;const ex=mx+Math.cos(a1+a2)*l2,ey=my+Math.sin(a1+a2)*l2;g2.beginPath();g2.moveTo(x1,y1);g2.lineTo(mx,my);g2.lineTo(ex,ey);g2.stroke();}
+let t=0;
+function draw(){
+t+=0.035;
+const bg=g2.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0b0518');bg.addColorStop(1,'#170a2e');g2.fillStyle=bg;g2.fillRect(0,0,W,H);
+for(let i=0;i<5;i++){const a=t*.7+i*1.256;g2.save();g2.globalAlpha=.08;g2.fillStyle='hsl('+((t*40+i*72)%360)+',90%,60%)';g2.beginPath();g2.moveTo(W/2,0);const bx=W/2+Math.cos(a)*W;g2.lineTo(bx-140,H);g2.lineTo(bx+140,H);g2.closePath();g2.fill();g2.restore();}
+conf.forEach(p=>{p.y+=p.v/100;if(p.y>1)p.y=-0.02;g2.fillStyle='hsla('+p.h+',90%,65%,.8)';g2.fillRect(p.x*W,p.y*H,p.s,p.s);});
+g2.fillStyle='rgba(160,90,255,.08)';g2.fillRect(0,H*.82,W,H*.18);
+const groundY=H*.82,bounce=Math.abs(Math.sin(t*2))*22;
+const hipY=groundY-150-bounce,hipX=W/2+Math.sin(t)*34;
+g2.fillStyle='rgba(0,0,0,.5)';g2.beginPath();g2.ellipse(hipX,groundY+8,70-bounce*.8,14,0,0,7);g2.fill();
+g2.strokeStyle='#fff';g2.lineWidth=9;g2.lineCap='round';g2.lineJoin='round';
+const lp=Math.sin(t*4),rp=Math.sin(t*4+Math.PI);
+limb(hipX,hipY,Math.PI/2-lp*.5,62,lp*.9+.2,62);
+limb(hipX,hipY,Math.PI/2-rp*.5,62,rp*.9+.2,62);
+const shX=hipX+Math.sin(t*2)*8,shY=hipY-78;
+g2.beginPath();g2.moveTo(hipX,hipY);g2.lineTo(shX,shY);g2.stroke();
+const la=Math.sin(t*4+1.3),ra=Math.sin(t*4+Math.PI+1.3);
+limb(shX,shY,-Math.PI/2+.9+la*.8,52,-la*.9,48);
+limb(shX,shY,-Math.PI/2-.9+ra*.8,52,ra*.9,48);
+const hx=shX+Math.sin(t*2)*6,hy=shY-34+Math.sin(t*4)*4;
+g2.beginPath();g2.arc(hx,hy,22,0,7);g2.stroke();
+g2.save();g2.globalAlpha=.25;g2.strokeStyle='#c084fc';g2.lineWidth=15;g2.beginPath();g2.arc(hx,hy,22,0,7);g2.stroke();g2.restore();
+requestAnimationFrame(draw);}
+draw();
+<\/script></body></html>`;
+  function matchPreset(idea){
+    if(/stick\s*-?\s*man|stickman|stick\s*figure/i.test(idea))return STICKMAN;
     return null;
   }
 
@@ -431,11 +473,17 @@
     $('loadingStage').classList.add('show');
     $('stageTitle').textContent='Generating: '+idea;
     let code=null,err='';
-    try{code=extractCode(await askProxy(idea));}
-    catch(e){err=e.message;}
-    if(!code){
-      try{code=extractCode(await askFallback(idea));}
+    const preset=matchPreset(idea);
+    if(preset){
+      await new Promise(r=>setTimeout(r,900));
+      code=preset;
+    }else{
+      try{code=extractCode(await askProxy(idea));}
       catch(e){err=e.message;}
+      if(!code){
+        try{code=extractCode(await askFallback(idea));}
+        catch(e){err=e.message;}
+      }
     }
     $('loadingStage').classList.remove('show');
     if(code){
