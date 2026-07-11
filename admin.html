@@ -315,7 +315,7 @@
     });
   }
 
-  const SUB_OPTS=[['free','Free'],['community','Community'],['manager','Manager (90%)'],['coowner','Co-Owner (\u221e)'],['owner','Owner (\u221e)']];
+  const SUB_OPTS=[['free','Free'],['community','Community'],['smart','Smart'],['pro','Pro'],['velox','Velox'],['manager','Manager (90%)'],['coowner','Co-Owner (\u221e)'],['owner','Owner (\u221e)']];
   function renderUsers(){
     const box=$('usersCard');
     let users={};
@@ -323,7 +323,7 @@
     const list=Object.values(users);
     if(!list.length){box.innerHTML='<div class="empty">No registered users yet (users register on the chat page, stored per browser).</div>';return;}
     box.innerHTML='<table><thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Usage today</th><th>Subscription</th></tr></thead><tbody></tbody></table>'+
-      '<div class="empty" style="margin-top:10px">\ud83d\udd12 Hidden tiers \u2014 Owner (\u221e), Co-Owner (\u221e), Manager (90%) \u2014 sirf yahin se milte hain, Plans page pe nahi dikhte. Community bhi yahin se grant karo (Discord ticket ke baad). Dropdown badalte hi save ho jata hai.</div>';
+      '<div class="empty" style="margin-top:10px">\ud83d\udd12 Hidden tiers \u2014 Owner (\u221e), Co-Owner (\u221e), Manager (90%) \u2014 sirf yahin se milte hain, Plans page pe nahi dikhte. Community/Smart/Pro/Velox bhi yahin se grant karo (Discord ticket ke baad). Modes: Normal=sabko, Nobble=Smart+, Fry=Pro+ \u2014 hidden tiers ko sab modes milte hain. Dropdown badalte hi save ho jata hai.</div>';
     const tb=box.querySelector('tbody');
     list.forEach(u=>{
       const tr=document.createElement('tr');
