@@ -320,6 +320,18 @@
   }
   .bubble a{color:var(--neon);}
   .bubble img{max-width:100%;border-radius:14px;margin:.4em 0;border:1px solid rgba(168,85,247,.3);display:block;}
+  .imgwrap{position:relative;display:block;max-width:420px;}
+  .img-dl{
+    position:absolute;bottom:12px;right:10px;
+    display:flex;align-items:center;gap:5px;
+    font-family:inherit;font-size:.7rem;font-weight:700;color:#fff;
+    background:rgba(10,6,20,.75);border:1px solid rgba(192,132,252,.5);
+    padding:6px 12px;border-radius:10px;cursor:pointer;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:0 0 14px rgba(168,85,247,.35);
+    transition:all .25s ease;
+  }
+  .img-dl:hover{background:rgba(109,40,217,.85);box-shadow:0 0 20px rgba(192,132,252,.6);transform:translateY(-1px);}
 
   /* code blocks with Copy + Preview */
   .codewrap{
@@ -614,7 +626,7 @@
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3.4 20.4L20.85 12.92C21.66 12.57 21.66 11.43 20.85 11.08L3.4 3.6C2.74 3.31 2.01 3.8 2.01 4.51L2 9.12C2 9.62 2.37 10.05 2.87 10.11L17 12L2.87 13.88C2.37 13.95 2 14.38 2 14.88L2.01 19.49C2.01 20.2 2.74 20.69 3.4 20.4Z" fill="white"/></svg>
           </button>
         </div>
-        <div class="hint">Smart AI + images (type: /img a neon city) · needs internet · ⚙ settings</div>
+        <div class="hint">Smart AI + images — try: /img a neon dragon · downloadable · ⚙ settings</div>
       </div>
     </main>
   </div>
@@ -1004,7 +1016,7 @@
   function currentChat(){return chats.find(x=>x.id===activeChatId);}
 
   /* ================= AI BACKENDS ================= */
-  const SYSTEM_PROMPT="You are Velox, a friendly, sharp and concise AI assistant inside the Velox Chat web app. Answer helpfully. Use markdown (bold, lists, code blocks with language tags) when useful. Keep answers reasonably short unless the user asks for detail. About yourself: you run on modern open-source AI models (like NVIDIA Nemotron 3, released in 2025) served through free APIs; your training knowledge goes up to roughly 2025 and you cannot browse the internet. Never claim your knowledge cutoff is 2021. For very recent or fast-changing facts (news, results, prices), say you may be out of date instead of guessing confidently.";
+  const SYSTEM_PROMPT="You are Velox, a friendly, sharp and concise AI assistant inside the Velox Chat web app. Answer helpfully. Use markdown (bold, lists, code blocks with language tags) when useful. Keep answers reasonably short unless the user asks for detail. About yourself: you run on modern open-source AI models (like NVIDIA Nemotron 3, released in 2025) served through free APIs; your training knowledge goes up to roughly 2025 and you cannot browse the internet. Never claim your knowledge cutoff is 2021. For very recent or fast-changing facts (news, results, prices), say you may be out of date instead of guessing confidently. IMAGE RULE: if the user asks you to create, generate, draw, make or show an image/picture/photo/logo/art/wallpaper — in ANY language or phrasing (English, Hindi, Hinglish, anything) — reply with ONLY this exact format and nothing else: [IMAGE: detailed English image-generation prompt describing the requested image].";
   function apiMessages(c,userText){
     const hist=c.messages.slice(-16).map(m=>({role:m.role,content:m.content}));
     return [{role:"system",content:SYSTEM_PROMPT},...hist,{role:"user",content:userText}];
@@ -1097,7 +1109,7 @@
     });
     text=esc(text);
     text=text.replace(/`([^`\n]+)`/g,'<code>$1</code>');
-    text=text.replace(/!\[([^\]]*)\]\((https?:[^)\s]+)\)/g,'<img src="$2" alt="$1" loading="lazy">');
+    text=text.replace(/!\[([^\]]*)\]\((https?:[^)\s]+)\)/g,'<span class="imgwrap"><img src="$2" alt="$1" loading="lazy"><button class="img-dl" data-url="$2">\u2b07 Download</button></span>');
     text=text.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
     text=text.replace(/(^|\s)\*([^*\n]+)\*/g,'$1<em>$2</em>');
     text=text.replace(/^###+\s*(.+)$/gm,'<h3>$1</h3>');
@@ -1127,6 +1139,22 @@
     return Promise.resolve();
   }
   $('messages').addEventListener('click',e=>{
+    const dl=e.target.closest('.img-dl');
+    if(dl){
+      const url=dl.dataset.url;
+      const orig=dl.textContent;
+      dl.textContent='\u23f3 ...';
+      fetch(url).then(r=>r.blob()).then(b=>{
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(b);
+        a.download='velox-image-'+Date.now()+'.jpg';
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+        dl.textContent='\u2705 Saved';
+        setTimeout(()=>{dl.textContent=orig;},1800);
+      }).catch(()=>{window.open(url,'_blank');dl.textContent=orig;});
+      return;
+    }
     const cp=e.target.closest('.copy-btn');
     if(cp){
       const item=codeStore[+cp.dataset.cid];if(!item)return;
@@ -1208,8 +1236,8 @@
     const text=$('input').value.trim();
     if(!text||busy)return;
     const c=currentChat();if(!c)return;
-    const imgMatch=text.match(/^\/(?:img|image)\s+(.+)/i)||text.match(/^(?:generate|create|make|draw)\s+(?:an?\s+)?(?:image|picture|photo)\s*(?:of|:)?\s*(.+)/i);
-    if(imgMatch){sendImage(text,imgMatch[1]);return;}
+    const imgPrompt=detectImagePrompt(text);
+    if(imgPrompt){sendImage(text,imgPrompt);return;}
     if(!canUse('msg')){
       $('input').value='';
       addRow('user').textContent=text;
@@ -1236,6 +1264,13 @@
       setStatus(false);
     }
 
+    const imv=(!failed&&reply)?reply.match(/\[IMAGE:\s*([^\]\n]+)\]/i):null;
+    if(imv){
+      $('typing').classList.remove('show');
+      await renderImageReply(c,text,imv[1]);
+      busy=false;$('send').disabled=false;$('input').focus();
+      return;
+    }
     $('typing').classList.remove('show');
     const bubble=addRow('ai');
     if(failed)bubble.classList.add('error');
@@ -1250,35 +1285,47 @@
     }
     busy=false;$('send').disabled=false;$('input').focus();
   }
-  async function sendImage(fullText,prompt){
-    const c=currentChat();if(!c||busy)return;
+  function detectImagePrompt(text){
+    let m=text.match(/^\/(?:img|image)\s+(.+)/i);
+    if(m)return m[1];
+    m=text.match(/(?:generate|create|make|draw|banao?|bana\s*(?:de|do)?)\s+(?:an?\s+|ek\s+)?(?:image|picture|photo|pic|img|logo|wallpaper|tasveer)\s*(?:of|:|ka|ki|for)?\s*(.+)/i);
+    if(m)return m[1];
+    m=text.match(/(?:image|picture|photo|pic|tasveer)\s+(?:of\s+|ka\s+|ki\s+)?(.+?)\s+(?:banao|bana\s*(?:de|do)|generate\s*kar(?:o|de)?|create\s*kar(?:o|de)?)\s*$/i);
+    if(m)return m[1];
+    return null;
+  }
+
+  async function renderImageReply(c,userText,prompt){
     if(!canUse('img')){
-      $('input').value='';
-      addRow('user').textContent=fullText;
       const lb=addRow('ai');lb.classList.add('error');
-      await typeOut(lb,"\ud83d\udeab Daily image limit reached on your **"+SUBS[mySubKey()].label+"** plan. Kal try karo \u2014 ya Community subscription lo! \ud83d\udc9c");
+      await typeOut(lb,"\ud83d\udeab Daily image limit reached on your **"+SUBS[mySubKey()].label+"** plan. Kal try karo \u2014 ya upgrade lo! \ud83d\udc9c");
       return;
     }
-    busy=true;$('send').disabled=true;$('input').value='';
-    addRow('user').textContent=fullText;
-    if(c.title==='New chat'){c.title=fullText.length>34?fullText.slice(0,34)+'\u2026':fullText;$('chatTitleHead').textContent=c.title;}
     $('typing').classList.add('show');
-    const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt.trim())+'?width=768&height=768&nologo=true&seed='+Math.floor(Math.random()*1e6);
-    const ok=await new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=url;});
+    const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt.trim())+'?width=768&height=768&nologo=true&model=flux&seed='+Math.floor(Math.random()*1e6);
+    const ok=await new Promise(res=>{let done=false;const fin=v=>{if(!done){done=true;res(v);}};const im=new Image();im.onload=()=>fin(true);im.onerror=()=>fin(false);setTimeout(()=>fin(false),60000);im.src=url;});
     $('typing').classList.remove('show');
     const bubble=addRow('ai');
     if(ok){
       const md='Here you go! \ud83c\udfa8\n\n![Generated image]('+url+')';
       bubble.innerHTML=renderMarkdown(md);
       scrollDown();
-      c.messages.push({role:'user',content:fullText});
+      c.messages.push({role:'user',content:userText});
       c.messages.push({role:'assistant',content:md});
       c.updated=Date.now();saveChats();renderSidebar();
       bumpUsage('img');
     }else{
       bubble.classList.add('error');
-      await typeOut(bubble,'\u26a0\ufe0f Image generate nahi ho payi \u2014 internet check karke dobara try karo.');
+      await typeOut(bubble,'\u26a0\ufe0f Image generate nahi ho payi \u2014 dobara try karo. (Preview panel mein network blocked hota hai \u2014 asli site pe kholo.)');
     }
+  }
+
+  async function sendImage(fullText,prompt){
+    const c=currentChat();if(!c||busy)return;
+    busy=true;$('send').disabled=true;$('input').value='';
+    addRow('user').textContent=fullText;
+    if(c.title==='New chat'){c.title=fullText.length>34?fullText.slice(0,34)+'\u2026':fullText;$('chatTitleHead').textContent=c.title;}
+    await renderImageReply(c,fullText,prompt);
     busy=false;$('send').disabled=false;$('input').focus();
   }
 
