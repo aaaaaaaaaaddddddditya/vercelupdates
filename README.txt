@@ -11,6 +11,8 @@ plans.html       -> Plans page: Free / Smart / Pro / Velox (all Coming Soon) + C
 admin.html       -> Admin panel (set password on first open). Manage plans, Coming Soon
                     badges, Discord link, community steps. Also shows registered users.
 config.js        -> Default plans + Discord link (edit this for changes visible to ALL visitors)
+animations.html  -> Animation Studio: describe an idea, AI builds a live animation
+                    (player + gallery + download). Uses the same /api/chat proxy.
 velox-lite.html  -> Bonus: the original simple Velox Lite chatbot page
 
 NEW: api/chat.js  -> Serverless AI proxy. Your OpenRouter key stays HIDDEN on the server.
