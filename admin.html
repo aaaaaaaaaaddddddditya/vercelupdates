@@ -6,6 +6,12 @@
 <title>Admin — Velox Chat</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>.logo img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -214,6 +220,14 @@
     </div>
   </div>
 
+  <div class="sec-title">🧠 AI Knowledge</div>
+  <div class="card">
+    <div class="f" style="margin-bottom:0">
+      <label>Custom knowledge — AI isse sach maan ke jawab dega (YoMetro, Velox, kuch bhi likho)</label>
+      <textarea id="knowledgeIn" style="min-height:130px"></textarea>
+    </div>
+  </div>
+
   <div class="sec-title">💎 Plans</div>
   <div id="plansEditor"></div>
 
@@ -279,6 +293,7 @@
     $('discordIn').value=cfg.discord||'';
     $('commTagIn').value=(cfg.community&&cfg.community.tag)||'';
     $('commStepsIn').value=((cfg.community&&cfg.community.steps)||[]).join('\n');
+    $('knowledgeIn').value=cfg.knowledge||'';
     // plans
     renderPlansEditor();
     renderUsers();
@@ -358,6 +373,7 @@
     cfg.community.title=cfg.community.title||'Community';
     cfg.community.tag=$('commTagIn').value.trim();
     cfg.community.steps=$('commStepsIn').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    cfg.knowledge=$('knowledgeIn').value.trim();
     // plans
     document.querySelectorAll('#plansEditor .card').forEach(c=>{
       const p=cfg.plans[+c.dataset.idx];
@@ -384,7 +400,7 @@
   $('exportCfg').onclick=()=>{
     // builds a fresh config.js with current values so user can redeploy for ALL visitors
     const out="/* Velox shared config — generated from Admin Panel */\n"+
-      "window.VX_DEFAULT_CFG = "+JSON.stringify({discord:cfg.discord,plans:cfg.plans,community:cfg.community},null,2)+";\n\n"+
+      "window.VX_DEFAULT_CFG = "+JSON.stringify({discord:cfg.discord,knowledge:cfg.knowledge,plans:cfg.plans,community:cfg.community},null,2)+";\n\n"+
       "window.vxGetCfg = function () {\n  try {\n    const s = localStorage.getItem(\"vx_cfg\");\n    if (s) {\n      const c = JSON.parse(s);\n      if (c && Array.isArray(c.plans) && c.plans.length) {\n        if (!c.community) c.community = JSON.parse(JSON.stringify(window.VX_DEFAULT_CFG.community));\n        return c;\n      }\n    }\n  } catch (e) {}\n  return JSON.parse(JSON.stringify(window.VX_DEFAULT_CFG));\n};\n\n"+
       "window.vxSaveCfg = function (c) {\n  try { localStorage.setItem(\"vx_cfg\", JSON.stringify(c)); return true; } catch (e) { return false; }\n};\n\n"+
       "window.vxResetCfg = function () {\n  try { localStorage.removeItem(\"vx_cfg\"); } catch (e) {}\n};\n";
@@ -401,5 +417,11 @@
   $('gate').classList.add('show');
 </script>
 
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+}
+</script>
 </body>
 </html>

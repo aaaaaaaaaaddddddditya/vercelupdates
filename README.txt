@@ -26,6 +26,23 @@ SETUP THE API KEY (one time, 1 minute)
 3. Deployments tab -> Redeploy. Done - smart AI live, key invisible.
    (If you skip this, the bot still works on the free Pollinations fallback.)
 
+OPTIONAL: USE REAL CLAUDE INSTEAD (paid, higher quality)
+----------------------------------------------------------
+api/chat.js now also supports a real Anthropic Claude key. If you add it,
+every chat request tries Claude FIRST, and only falls back to the free
+OpenRouter chain if Claude fails or isn't configured.
+  1. Get a key at https://console.anthropic.com (Settings -> API Keys).
+     NEVER paste this key into a chat with any AI assistant, including
+     Claude itself - only type it directly into the Vercel field below.
+  2. Vercel dashboard -> your project -> Settings -> Environment Variables -> Add:
+        Name : ANTHROPIC_API_KEY
+        Value: your key (sk-ant-api03-...)
+  3. Deployments tab -> Redeploy.
+  4. Set a spending limit at console.anthropic.com -> Settings -> Limits so
+     usage can't run away on you - this key is billed per message, unlike
+     the free OpenRouter/Pollinations chain.
+  This is entirely optional - skip it and the app keeps working 100% free.
+
 DEPLOY ON VERCEL (2 minutes)
 ----------------------------
 1. Unzip this folder.
@@ -53,3 +70,24 @@ ADMIN PANEL
 * You can: edit plan names, prices, taglines, features, toggle "Coming Soon",
   set the "Most Popular" highlight, change the Discord invite link and the
   community ticket steps, view registered users, reset to defaults.
+
+
+ANDROID APP (2 ways)
+--------------------
+The site is now a full PWA (installable app).
+
+WAY 1 - Instant install (no APK needed):
+  1. Deploy on Vercel as usual.
+  2. Open your site in Chrome on any Android phone.
+  3. Chrome menu (3 dots) -> "Install app" (ya "Add to Home screen").
+  4. Done - Velox opens fullscreen like a real app, with your logo,
+     works offline (shell), and shows in the app drawer.
+
+WAY 2 - Real APK file (Play-Store ready), free, ~5 min:
+  1. Deploy the site first (PWA must be live).
+  2. Go to https://www.pwabuilder.com
+  3. Paste your site URL -> Start -> Package for Android.
+  4. Download the .apk / .aab. Install the APK on any phone directly,
+     or upload the .aab to Google Play Console ($25 one-time) to publish.
+
+Note: sw.js caches the app shell. AI calls always need internet.

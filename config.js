@@ -2,6 +2,7 @@
    Admin panel edits are saved to localStorage and override these defaults (per browser). */
 window.VX_DEFAULT_CFG = {
   discord: "https://discord.gg/velox",
+  knowledge: "Velox Lite (this app) is a free AI assistant web app with smart chat, AI image generation, an Animation Studio and a Code Studio; plans are Free, Smart, Pro and Velox (coming soon) plus a free Community subscription via the Discord server (join, create a ticket, staff grants it). YoMetro (yometro.com) is India's metro route finder \u2014 a single platform for metro routes of all active metro networks in India: 22 metro networks, 830+ metro lines and about 90,000 routes, covering Delhi, Mumbai, Bangalore, Chennai, Hyderabad, Kolkata, Jaipur, Lucknow, Kochi, Pune, Ahmedabad, Noida, Nagpur, Kanpur, Agra, Patna and more. YoMetro features: route planning with minimum time or minimum interchanges, fare calculator, interactive maps, station info (facilities, train timings, parking), nearby attractions/landmarks near stations, metro news and travel guides, an Android app on Google Play, and a companion global site yometro.net.",
   plans: [
     {
       id: "free", name: "Free", price: "₹0", period: "forever",
@@ -47,6 +48,7 @@ window.vxGetCfg = function () {
       const c = JSON.parse(s);
       if (c && Array.isArray(c.plans) && c.plans.length) {
         if (!c.community) c.community = JSON.parse(JSON.stringify(window.VX_DEFAULT_CFG.community));
+        if (!c.knowledge) c.knowledge = window.VX_DEFAULT_CFG.knowledge;
         return c;
       }
     }

@@ -18,6 +18,13 @@
 {"@context":"https://schema.org","@type":"WebApplication","name":"Velox Lite AI Assistant","alternateName":["Velox Lite","Velox AI"],"applicationCategory":"AI Chatbot","operatingSystem":"Web","description":"Free ChatGPT-style AI assistant with smart chat, AI image generation, animations and code tools.","offers":{"@type":"Offer","price":"0","priceCurrency":"INR"}}
 </script>
 <link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="config.js"></script>
 <style>.logo img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1045,7 +1052,18 @@
 
   /* ================= AI BACKENDS ================= */
   const SYSTEM_PROMPT="You are Velox, a friendly, sharp and concise AI assistant inside the Velox Chat web app. Answer helpfully. Use markdown (bold, lists, code blocks with language tags) when useful. Keep answers reasonably short unless the user asks for detail. About yourself: you run on modern open-source AI models (like NVIDIA Nemotron 3, released in 2025) served through free APIs; your training knowledge goes up to roughly 2025 and you cannot browse the internet. Never claim your knowledge cutoff is 2021. For very recent or fast-changing facts (news, results, prices), say you may be out of date instead of guessing confidently. IMAGE RULE: if the user asks you to create, generate, draw, make or show an image/picture/photo/logo/art/wallpaper — in ANY language or phrasing (English, Hindi, Hinglish, anything) — reply with ONLY this exact format and nothing else: [IMAGE: detailed English image-generation prompt describing the requested image].";
-  function sysPrompt(){if(vxView==='code')return SYSTEM_PROMPT+" "+CODE_PROMPT;if(vxView==='anim')return SYSTEM_PROMPT+" "+ANIM_PROMPT;return SYSTEM_PROMPT;}
+  function customKnowledge(){
+    try{
+      const cf=window.vxGetCfg?window.vxGetCfg():null;
+      return (cf&&cf.knowledge)?" EXTRA KNOWLEDGE from the site owner (treat as true and answer confidently from it): "+cf.knowledge:"";
+    }catch(e){return "";}
+  }
+  function sysPrompt(){
+    const base=SYSTEM_PROMPT+customKnowledge();
+    if(vxView==='code')return base+" "+CODE_PROMPT;
+    if(vxView==='anim')return base+" "+ANIM_PROMPT;
+    return base;
+  }
   function apiMessages(c,userText){
     const hist=c.messages.slice(-16).map(m=>({role:m.role,content:m.content}));
     return [{role:"system",content:sysPrompt()},...hist,{role:"user",content:userText}];
@@ -1556,5 +1574,11 @@
   })();
 </script>
 
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+}
+</script>
 </body>
 </html>
